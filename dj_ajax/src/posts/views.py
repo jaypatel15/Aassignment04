@@ -23,4 +23,4 @@ def load_post_data_view(request):
     return JsonResponse({'data': data})
 
 def hello_world_view(request):
-    return JsonResponse({'text': 'hello world'})
+    return JsonResponse({'text': 'hello world x2'})
