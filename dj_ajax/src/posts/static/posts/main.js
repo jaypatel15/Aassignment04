@@ -10,6 +10,10 @@ const body = document.getElementById('id_body')
 
 const csrf = document.getElementsByName('csrfmiddlewaretoken')
 const url = window.location.href
+const dropzone =document.getElementById('my-dropzone')
+const addBtn = document.getElementById('add-btn')
+const closeBtns = [...document.getElementsByClassName('add-modal-close')]
+
 
 const alertBox = document.getElementById('alert-box')
 console.log('csrf', csrf[0].value)
@@ -30,6 +34,12 @@ const getCookie =(name) => {
     return cookieValue;
 }
 const csrftoken = getCookie('csrftoken');
+const deleted = localStorage.getItem('title')
+if (deleted){
+    handleAlerts('danger', `deleted "${deleted}"`)
+    localStorage.clear()
+}
+
 
 const likeUnlikePosts = ()=> {
     const likeUnlikeForms = [...document.getElementsByClassName('like-unlike-forms')]
@@ -78,7 +88,7 @@ const getData = () => {
                            <div class="card-footer">
                                 <div class="row">
                                     <div class="col-2">
-                                    <a href="${url}${el.id}" class="btn btn-primary">Details</a>
+                                        <a href="${url}${el.id}" class="btn btn-primary">Details</a>
                                     </div>
                                     <div class="col-2">
                                         <form class="like-unlike-forms" data-form-id="${el.id}">
@@ -115,6 +125,7 @@ loadBtn.addEventListener('click', () => {
     getData()
 })
 
+let newPostId = null
 postForm.addEventListener('submit', e => {
     e.preventDefault()
 
@@ -128,6 +139,7 @@ postForm.addEventListener('submit', e => {
         },
         success: function(response) {
             console.log(response)
+            newPostId = response.id
             postsBox.insertAdjacentHTML('afterbegin', `
                 <div class="card mb-4">
                     <div class="card-body">
@@ -149,11 +161,11 @@ postForm.addEventListener('submit', e => {
                 </div>
             `);
             likeUnlikePosts();
-            $('#addPostModal').modal('hide');
-            if (typeof handleAlerts === 'function') {
+           // $('#addPostModal').modal('hide');
+           // if (typeof handleAlerts === 'function') {
                 handleAlerts('success', 'New post added!');
-                postForm.reset()
-            } 
+             //   postForm.reset()//
+          //  } 
             postForm.reset()
         },
         error: function(error) {
@@ -166,5 +178,33 @@ postForm.addEventListener('submit', e => {
         
     })
 })
+
+addBtn.addEventListener('click', () => {
+    dropzone.classList.remove('not-visible')
+})
+
+closeBtns.forEach(btn=> btn.addEventListener('click', ()=>{
+    postForm.reset()
+    if (!dropzone.classList.contains('not-visible')){
+        dropzone.classList.add('not-visible')
+    }
+    const myDropzone = Dropzone.forElement('#my-dropzone')
+    myDropzone.removeAllFiles(true)
+}))
+
+Dropzone.autoDiscover = false 
+const myDropzone = new Dropzone('#my-dropzone', {
+    url: 'upload/',
+    init: function() {
+       this.on('sending', function(file, xhr, formData){
+            formData.append('csrfmiddlewaretoken', csrftoken)
+            formData.append('new_post_id', newPostId)
+       }) 
+    },
+    maxFiles: 3,
+    maxFilesize: 4,
+    acceptedFiles: '.png, .jpg, .jpeg'
+})
+
 
 getData()
